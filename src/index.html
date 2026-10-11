@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ThreadsBlocker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <script src="storage.js"></script>
+  <script>
+    Storage.get('session').then((s) => { location.replace(s ? 'main.html' : 'login.html'); });
+  </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "appId": "com.threadsblocker.app",
+  "appName": "ThreadsBlocker",
+  "webDir": "src",
+  "plugins": {
+    "CapacitorHttp": { "enabled": true }
+  }
+}

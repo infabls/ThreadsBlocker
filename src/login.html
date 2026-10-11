@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Вход — ThreadsBlocker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Вход в Threads</h1>
+  <input id="username" placeholder="Имя пользователя" autocapitalize="none" autocomplete="username">
+  <input id="password" type="password" placeholder="Пароль" autocomplete="current-password">
+  <div id="error"></div>
+  <button id="login">Войти</button>
+  <script src="storage.js"></script>
+  <script src="bundle.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    Storage.get('session').then((s) => { if (s) location.replace('main.html'); });
+    $('login').onclick = async () => {
+      const username = $('username').value.trim(), password = $('password').value;
+      if (!username || !password) { $('error').textContent = 'Введите логин и пароль'; return; }
+      $('login').disabled = true; $('error').textContent = '';
+      try {
+        const session = await TB.login(username, password);
+        await Storage.set('session', JSON.stringify(session));
+        location.replace('main.html');
+      } catch (e) {
+        $('error').textContent = e.message;
+        $('login').disabled = false;
+      }
+    };
+  </script>
+</body>
+</html>

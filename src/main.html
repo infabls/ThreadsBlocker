@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Блокировка — ThreadsBlocker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Массовая блокировка</h1>
+  <textarea id="names" placeholder="Юзернеймы, по одному на строку"></textarea>
+  <input id="file" type="file" accept=".txt,text/plain" hidden>
+  <button class="secondary" id="load">Загрузить .txt файл</button>
+  <button class="danger" id="block">Заблокировать всех</button>
+  <progress id="bar" value="0" max="1"></progress>
+  <div id="status"></div>
+  <div id="log"></div>
+  <br>
+  <button class="secondary" id="logout">Выйти из аккаунта</button>
+  <script src="storage.js"></script>
+  <script src="bundle.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const log = (text) => { const d = document.createElement('div'); d.textContent = text; $('log').prepend(d); };
+    const parse = (t) => [...new Set(t.split(/\r?\n/).map((s) => s.trim().replace(/^@/, '')).filter(Boolean))];
+
+    async function logout() { await Storage.clear(); location.replace('login.html'); }
+
+    $('load').onclick = () => $('file').click();
+    $('file').onchange = async (e) => {
+      const f = e.target.files[0];
+      if (f) $('names').value = await f.text();
+      e.target.value = '';
+    };
+    $('logout').onclick = logout;
+
+    $('block').onclick = async () => {
+      const names = parse($('names').value);
+      if (!names.length) { $('status').textContent = 'Список пуст'; return; }
+      if (names.length > 100 &&
+          !confirm(`В списке ${names.length} аккаунтов. Возможен rate-limit со стороны Instagram. Продолжить?`)) return;
+      const raw = await Storage.get('session');
+      if (!raw) return logout();
+      const session = JSON.parse(raw);
+
+      $('block').disabled = true; $('log').textContent = '';
+      $('bar').max = names.length; $('bar').value = 0;
+      let done = 0, ok = 0;
+      for (const name of names) {
+        $('status').textContent = `${done} / ${names.length}`;
+        try {
+          const userId = await TB.findUserId(name, session);
+          if (!userId) log(`❌ ${name} — не найден`);
+          else if (await TB.block(userId, session)) { ok++; log(`✅ ${name} — заблокирован`); }
+          else log(`❌ ${name} — ошибка`);
+        } catch (e) {
+          if (e instanceof TB.AuthError) {
+            alert('Сессия истекла. Войдите снова.');
+            return logout();
+          }
+          log(`❌ ${name} — ${e.message || 'ошибка'}`);
+        }
+        $('bar').value = ++done;
+        await sleep(500);
+      }
+      $('status').textContent = `Готово: заблокировано ${ok} из ${names.length}`;
+      $('block').disabled = false;
+    };
+  </script>
+</body>
+</html>

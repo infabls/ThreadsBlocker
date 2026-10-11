@@ -1,0 +1,8 @@
+node_modules/
+.env
+.venv/
+android/app/build/
+android/build/
+.gradle/
+local.properties
+.claude/
