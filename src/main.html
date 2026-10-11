@@ -103,7 +103,10 @@
         session = s;
         return true;
       }
+      // Поиск Instagram не показывает уже заблокированных вами, поэтому сверяемся со списком заблокированных
+      let blockedSet = new Set();
       const blockOne = async (name) => {
+        if (blockedSet.has(name.toLowerCase())) { already++; return log(`ℹ️ ${name} — уже заблокирован`); }
         const userId = await TB.findUserId(name, session);
         if (!userId) return log(`❌ ${name} — не найден`);
         if (await TB.block(userId, session)) { ok++; log(`✅ ${name} — заблокирован`); }
@@ -112,7 +115,14 @@
 
       window.__busy = true; $('block').disabled = true; $('log').textContent = '';
       $('bar').max = names.length; $('bar').value = 0;
-      let done = 0, ok = 0;
+      let done = 0, ok = 0, already = 0;
+      $('status').textContent = 'Проверяю список уже заблокированных…';
+      try {
+        let list;
+        try { list = await TB.blockedList(session); }
+        catch (e) { if (e instanceof TB.AuthError && (await relogin())) list = await TB.blockedList(session); else throw e; }
+        blockedSet = new Set(list.map((n) => n.toLowerCase()));
+      } catch (e) { /* список недоступен — блокируем как раньше, просто без проверки «уже заблокирован» */ }
       for (const name of names) {
         $('status').textContent = `${done} / ${names.length}`;
         try {
@@ -131,7 +141,7 @@
         $('bar').value = ++done;
         await sleep(500);
       }
-      $('status').textContent = `Готово: заблокировано ${ok} из ${names.length}`;
+      $('status').textContent = `Готово: заблокировано ${ok}` + (already ? `, уже были заблокированы ${already}` : '') + ` из ${names.length}`;
       $('block').disabled = false; window.__busy = false;
     };
   </script>
