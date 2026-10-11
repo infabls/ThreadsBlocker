@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Вход в Threads</h1>
+  <h1>Вход в Threads <small id="ver"></small></h1>
   <input id="username" placeholder="Имя пользователя" autocapitalize="none" autocomplete="username">
   <input id="password" type="password" placeholder="Пароль" autocomplete="current-password">
   <div id="error"></div>
@@ -15,6 +15,7 @@
   <script src="version.js"></script>
   <script src="update.js"></script>
   <script src="storage.js"></script>
+  <script>document.getElementById('ver').textContent = 'v' + (window.APP_VERSION || '?');</script>
   <script src="bundle.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);

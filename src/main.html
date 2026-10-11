@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Массовая блокировка</h1>
+  <h1>Массовая блокировка <small id="ver"></small></h1>
   <textarea id="names" placeholder="Юзернеймы, по одному на строку"></textarea>
   <input id="file" type="file" accept=".txt,text/plain" hidden>
   <button class="secondary" id="load">Загрузить .txt файл</button>
@@ -20,6 +20,7 @@
   <script src="version.js"></script>
   <script src="update.js"></script>
   <script src="storage.js"></script>
+  <script>document.getElementById('ver').textContent = 'v' + (window.APP_VERSION || '?');</script>
   <script src="bundle.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);

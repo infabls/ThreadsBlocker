@@ -12,3 +12,4 @@ progress { width: 100%; height: 12px; margin: 4px 0; }
 #error { color: #ff6b6b; }
 #log { font-size: 14px; max-height: 40vh; overflow-y: auto; padding: 8px; background: #1c1c1c; border-radius: 10px; }
 #log div { padding: 2px 0; word-break: break-all; }
+h1 small { font-size: 13px; font-weight: 400; color: #00e1ff; margin-left: 6px; }
