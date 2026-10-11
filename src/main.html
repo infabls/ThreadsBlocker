@@ -16,6 +16,12 @@
   <div id="status"></div>
   <div id="log"></div>
   <br>
+  <button class="secondary" id="listBtn">Показать заблокированных</button>
+  <div id="blockedBox" hidden>
+    <div id="blockedStatus"></div>
+    <textarea id="blockedList" readonly></textarea>
+    <button class="secondary" id="copyBtn">Скопировать список</button>
+  </div>
   <button class="secondary" id="logout">Выйти из аккаунта</button>
   <script src="version.js"></script>
   <script src="update.js"></script>
@@ -28,6 +34,18 @@
     const log = (text) => { const d = document.createElement('div'); d.textContent = text; $('log').prepend(d); };
     const parse = (t) => [...new Set(t.split(/\r?\n/).map((s) => s.trim().replace(/^@/, '')).filter(Boolean))];
 
+    // сессия истекла -> один тихий перевход сохранёнными данными (если пользователь запомнил пароль)
+    async function reloginSession() {
+      const c = await Storage.get('creds');
+      if (!c) return null;
+      try {
+        const { u, p } = JSON.parse(c);
+        const s = await TB.login(u, p);
+        await Storage.set('session', JSON.stringify(s));
+        return s;
+      } catch (e) { return null; }
+    }
+
     async function logout() { await Storage.clear(); location.replace('login.html'); }
 
     $('load').onclick = () => $('file').click();
@@ -38,6 +56,36 @@
     };
     $('logout').onclick = logout;
 
+    $('listBtn').onclick = async () => {
+      const raw = await Storage.get('session');
+      if (!raw) return logout();
+      $('listBtn').disabled = true;
+      $('blockedBox').hidden = false;
+      $('blockedList').value = '';
+      $('blockedStatus').textContent = 'Загружаю…';
+      const load = (s) => TB.blockedList(s, (n) => { $('blockedStatus').textContent = 'Загружаю… ' + n; });
+      try {
+        let names;
+        try { names = await load(JSON.parse(raw)); }
+        catch (e) {
+          const s = e instanceof TB.AuthError ? await reloginSession() : null;
+          if (!s) throw e;
+          names = await load(s);
+        }
+        $('blockedList').value = names.join('\n');
+        $('blockedStatus').textContent = 'Заблокировано аккаунтов: ' + names.length;
+      } catch (e) {
+        if (e instanceof TB.AuthError) { alert('Сессия истекла. Войдите снова.'); return logout(); }
+        $('blockedStatus').textContent = '❌ ' + (e.message || 'ошибка');
+      }
+      $('listBtn').disabled = false;
+    };
+    $('copyBtn').onclick = async () => {
+      const t = $('blockedList').value;
+      try { await navigator.clipboard.writeText(t); $('blockedStatus').textContent += ' — скопировано'; }
+      catch (e) { $('blockedList').select(); document.execCommand('copy'); }
+    };
+
     $('block').onclick = async () => {
       const names = parse($('names').value);
       if (!names.length) { $('status').textContent = 'Список пуст'; return; }
@@ -47,16 +95,11 @@
       if (!raw) return logout();
       let session = JSON.parse(raw);
 
-      // сессия истекла -> один тихий перевход сохранёнными данными (если пользователь запомнил пароль)
       async function relogin() {
-        const c = await Storage.get('creds');
-        if (!c) return false;
-        try {
-          const { u, p } = JSON.parse(c);
-          session = await TB.login(u, p);
-          await Storage.set('session', JSON.stringify(session));
-          return true;
-        } catch (e) { return false; }
+        const s = await reloginSession();
+        if (!s) return false;
+        session = s;
+        return true;
       }
       const blockOne = async (name) => {
         const userId = await TB.findUserId(name, session);
