@@ -48,3 +48,12 @@ pnpm exec cap open android   # собрать APK в Android Studio
 - Android: Capacitor, запросы идут нативно (`CapacitorHttp`), сессия хранится в `@capacitor/preferences`.
 - Пауза между блокировками 500 мс; для списков больше 100 имён возможен временный rate-limit.
 - Другой порт: `PORT=9000 node server.js`.
+
+## Лицензия, конфиденциальность, ответственность
+
+- **Лицензия:** [PolyForm Noncommercial 1.0.0](LICENSE). Исходный код открыт для чтения, использования и изменения **в некоммерческих целях**. Продавать приложение, распространять его платно или зарабатывать на нём без письменного разрешения автора нельзя. Бесплатное распространение допускается с сохранением [LICENSE](LICENSE). Это *source-available*, а не «open source» в смысле OSI. Коммерческая лицензия — по запросу через [Issues](https://github.com/infabls/ThreadsBlocker/issues).
+- **Конфиденциальность:** автор не собирает никаких данных (ни паролей, ни аналитики); приложение работает напрямую с Instagram и не связано ни с каким сервером автора. Подробности — [PRIVACY.md](PRIVACY.md).
+- **Без гарантий:** приложение предоставляется «как есть», неофициальное, использование на ваш страх и риск. Блокировка аккаунта или удаление не тех комментариев — ваша ответственность. Подробности — [DISCLAIMER.md](DISCLAIMER.md).
+- Сторонние библиотеки и их лицензии — [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+*English: source-available under the PolyForm Noncommercial License 1.0.0 (no commercial use or paid distribution by others); no data collected; provided "as is" with no warranty — use at your own risk.*
