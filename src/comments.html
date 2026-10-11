@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Мои комментарии — ThreadsBlocker</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .item { display: flex; gap: 10px; padding: 8px; margin-bottom: 6px; background: #1c1c1c; border-radius: 10px; font-size: 14px; }
+    .item input { width: auto; margin: 4px 0 0; flex: none; }
+    .item .who { color: #00e1ff; }
+    .item .src { color: #9aa0b8; font-size: 13px; margin-top: 2px; }
+    .item.done { opacity: .45; }
+    .item.fail { border: 1px solid #ff6b6b; }
+    #list { max-height: 50vh; overflow-y: auto; margin: 8px 0; }
+    .row { display: flex; gap: 8px; } .row button { flex: 1; }
+    details { font-size: 12px; color: #9aa0b8; margin: 8px 0; } pre { white-space: pre-wrap; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h1>Мои комментарии <small id="ver"></small></h1>
+  <p style="font-size:14px;color:#cfd3e6;margin-top:0">
+    Находит ваши ответы <b>на чужие посты</b>. Ответы в ветках, где корневой пост ваш, не затрагиваются.
+    Сначала идёт только поиск — ничего не удаляется, пока вы не нажмёте «Удалить выбранные».
+  </p>
+  <button id="scan">Найти мои комментарии на чужих постах</button>
+  <button class="secondary" id="stop" hidden>Остановить</button>
+  <div id="status"></div>
+  <div id="skipped" style="font-size:13px;color:#9aa0b8"></div>
+  <div id="tools" hidden>
+    <div class="row">
+      <button class="secondary" id="all">Выбрать все</button>
+      <button class="secondary" id="none">Снять все</button>
+    </div>
+    <div id="list"></div>
+    <button class="danger" id="del">Удалить выбранные</button>
+    <progress id="bar" value="0" max="1"></progress>
+  </div>
+  <details><summary>Техническая информация</summary><pre id="tech"></pre></details>
+  <br>
+  <button class="secondary" id="back">← Назад</button>
+
+  <script src="version.js"></script>
+  <script src="update.js"></script>
+  <script src="storage.js"></script>
+  <script>document.getElementById('ver').textContent = 'v' + (window.APP_VERSION || '?');</script>
+  <script src="bundle.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const sleep = (a, b) => new Promise((r) => setTimeout(r, a + Math.random() * (b - a)));
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const found = [];          // кандидаты на удаление
+    let skippedOwn = 0, skippedUnknown = 0, stopped = false, busy = false;
+
+    $('back').onclick = () => { location.href = 'main.html'; };
+    $('stop').onclick = () => { stopped = true; $('stop').disabled = true; };
+    $('all').onclick = () => document.querySelectorAll('#list input').forEach((c) => (c.checked = true));
+    $('none').onclick = () => document.querySelectorAll('#list input').forEach((c) => (c.checked = false));
+
+    async function getSession() {
+      const raw = await Storage.get('session');
+      if (!raw) { location.replace('login.html'); return null; }
+      return JSON.parse(raw);
+    }
+    async function reloginSession() {
+      const c = await Storage.get('creds');
+      if (!c) return null;
+      try {
+        const { u, p } = JSON.parse(c);
+        const s = await TB.login(u, p);
+        await Storage.set('session', JSON.stringify(s));
+        return s;
+      } catch (e) { return null; }
+    }
+    // выполняет действие; при истёкшей сессии один раз тихо перезаходит
+    async function withSession(fn) {
+      let s = await getSession();
+      if (!s) return;
+      try { return await fn(s); }
+      catch (e) {
+        if (!(e instanceof TB.AuthError)) throw e;
+        s = await reloginSession();
+        if (!s) { alert('Сессия истекла. Войдите снова.'); await Storage.clear(); location.replace('login.html'); return; }
+        return await fn(s);
+      }
+    }
+    function refreshSkipped() {
+      $('skipped').textContent = `Пропущено: в моих ветках — ${skippedOwn}, не удалось определить корень — ${skippedUnknown}`;
+    }
+
+    $('scan').onclick = async () => {
+      if (busy) return;
+      busy = true; stopped = false;
+      found.length = 0; skippedOwn = skippedUnknown = 0;
+      $('list').textContent = ''; $('tools').hidden = true; $('tech').textContent = '';
+      $('scan').disabled = true; $('stop').hidden = false; $('stop').disabled = false;
+      refreshSkipped();
+      let sample = null;
+      try {
+        await withSession((session) => TB.scanReplies(session, {
+          isStopped: () => stopped,
+          onProgress: ({ pages, found: n }) => { $('status').textContent = `Просмотрено страниц: ${pages}, ответов найдено: ${n}`; },
+          onItem: (it) => {
+            if (!sample) sample = it;
+            if (it.status === 'own') { skippedOwn++; refreshSkipped(); return; }
+            if (it.status === 'unknown') { skippedUnknown++; refreshSkipped(); return; }
+            found.push(it);
+            const d = document.createElement('label');
+            d.className = 'item';
+            d.innerHTML = `<input type="checkbox" checked data-id="${esc(it.id)}"><div>` +
+              `<div>${esc(it.text || '(без текста)')}</div>` +
+              `<div class="src">в ветке <span class="who">@${esc(it.rootUser)}</span>${it.rootText ? ': ' + esc(it.rootText) : ''}</div></div>`;
+            $('list').appendChild(d);
+            $('tools').hidden = false;
+          },
+        }));
+        $('status').textContent += stopped ? ' — остановлено' : ' — поиск завершён';
+        $('status').textContent += `. К удалению: ${found.length}`;
+      } catch (e) {
+        $('status').textContent = '❌ ' + (e.message || 'ошибка');
+      }
+      $('tech').textContent = sample ? JSON.stringify(sample, null, 1) : 'ничего не найдено';
+      $('scan').disabled = false; $('stop').hidden = true; busy = false;
+    };
+
+    $('del').onclick = async () => {
+      if (busy) return;
+      const ids = [...document.querySelectorAll('#list input:checked')].map((c) => c.dataset.id);
+      if (!ids.length) { $('status').textContent = 'Ничего не выбрано'; return; }
+      if (!confirm(`Удалить ${ids.length} комментариев? Это нельзя отменить.`)) return;
+      busy = true; stopped = false;
+      $('del').disabled = true; $('scan').disabled = true; $('stop').hidden = false; $('stop').disabled = false;
+      $('bar').max = ids.length; $('bar').value = 0;
+      let ok = 0, fail = 0, i = 0;
+      for (const id of ids) {
+        if (stopped) break;
+        const row = document.querySelector(`#list input[data-id="${id}"]`).closest('.item');
+        try {
+          const done = await withSession((s) => TB.deletePost(id, s));
+          if (done) { ok++; row.classList.add('done'); row.querySelector('input').checked = false; row.querySelector('input').disabled = true; }
+          else { fail++; row.classList.add('fail'); }
+        } catch (e) { fail++; row.classList.add('fail'); }
+        $('bar').value = ++i;
+        $('status').textContent = `Удалено: ${ok}, не удалось: ${fail} из ${ids.length}`;
+        await sleep(3600, 7000); // пауза между удалениями, чтобы не получить ограничение
+      }
+      $('status').textContent = `${stopped ? 'Остановлено. ' : 'Готово. '}Удалено: ${ok}, не удалось: ${fail} из ${ids.length}`;
+      $('del').disabled = false; $('scan').disabled = false; $('stop').hidden = true; busy = false;
+    };
+  </script>
+</body>
+</html>
