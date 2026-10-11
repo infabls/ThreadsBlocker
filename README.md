@@ -20,7 +20,15 @@ node server.js
 
 ## Телефон (Android-приложение)
 
-Автономное приложение, ничего больше не нужно. Установка APK из релизов (включите «Установка из неизвестных источников»).
+<p align="center">
+  <a href="https://github.com/infabls/ThreadsBlocker/releases/latest/download/ThreadsBlocker.apk">
+    <img src="https://img.shields.io/badge/%E2%AC%87%20%D0%A1%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C%20APK-00E1FF?style=for-the-badge&logo=android&logoColor=black" alt="Скачать APK">
+  </a>
+</p>
+
+Автономное приложение, ничего больше не нужно: нажмите кнопку выше, откройте скачанный файл (включите «Установка из неизвестных источников») и установите. Все версии — в [Releases](https://github.com/infabls/ThreadsBlocker/releases).
+
+Новый релиз собирается автоматически при создании тега: `git tag v1.0.1 && git push --tags`.
 
 Сборка APK самому:
 
