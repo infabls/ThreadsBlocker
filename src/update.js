@@ -28,8 +28,11 @@
     const asset = (rel.assets || []).find((a) => a.name === 'ThreadsBlocker-web.zip');
     if (!latest || !asset || !newer(latest, window.APP_VERSION || '0.0.0')) return;
 
+    // плагин требует контрольную сумму; GitHub отдаёт SHA-256 файла в поле digest
+    const checksum = String(asset.digest || '').replace(/^sha256:/, '');
+    if (!checksum) throw new Error('у релиза нет контрольной суммы');
     note(`Загружаю обновление ${latest}…`, 4000);
-    const bundle = await U.download({ url: asset.browser_download_url, version: latest });
+    const bundle = await U.download({ url: asset.browser_download_url, version: latest, checksum });
     if (window.__busy) {                       // идёт блокировка — применим при следующем запуске
       await U.next({ id: bundle.id });
       note(`Обновление ${latest} загружено — применится при следующем запуске`);
