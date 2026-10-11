@@ -6,7 +6,7 @@ ThreadsBlocker использует сторонние библиотеки по
 
 | Пакет / Package | Лицензия / License | Назначение / Purpose |
 |---|---|---|
-| [threads-api](https://github.com/junhoyeo/threads-api) | MIT | вход и запросы к Threads / login and Threads requests |
+| Клиентская библиотека, Copyright (c) Junho Yeo / client library, Copyright (c) Junho Yeo | MIT | сетевой клиент / network client |
 | [axios](https://github.com/axios/axios) | MIT | HTTP-клиент / HTTP client |
 | [@capacitor/core, @capacitor/android, @capacitor/preferences](https://github.com/ionic-team/capacitor) | MIT | Android-оболочка и хранилище / Android shell and storage |
 | [@capgo/capacitor-updater](https://github.com/Cap-go/capacitor-updater) | MPL-2.0 | автообновление веб-части / web-layer auto-update (используется без изменений / used unmodified) |
