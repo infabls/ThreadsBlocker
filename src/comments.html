@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Мои комментарии — ThreadsBlocker</title>
+  <link rel="icon" href="icon.png">
   <link rel="stylesheet" href="style.css">
   <style>
     .item { display: flex; gap: 10px; padding: 8px; margin-bottom: 6px; background: #1c1c1c; border-radius: 10px; font-size: 14px; }
@@ -115,7 +116,9 @@
             d.className = 'item';
             d.innerHTML = `<input type="checkbox" checked data-id="${esc(it.id)}"><div>` +
               `<div>${esc(it.text || '(без текста)')}</div>` +
-              `<div class="src">в ветке <span class="who">@${esc(it.rootUser)}</span>${it.rootText ? ': ' + esc(it.rootText) : ''}</div></div>`;
+              (it.status === 'orphan'
+                ? `<div class="src">родительский пост недоступен (удалён или заблокирован)</div></div>`
+                : `<div class="src">в ветке <span class="who">@${esc(it.rootUser)}</span>${it.rootText ? ': ' + esc(it.rootText) : ''}</div></div>`);
             $('list').appendChild(d);
             $('tools').hidden = false;
           },
