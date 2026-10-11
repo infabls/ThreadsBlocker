@@ -47,7 +47,7 @@
       if (!raw) return logout();
       const session = JSON.parse(raw);
 
-      $('block').disabled = true; $('log').textContent = '';
+      window.__busy = true; $('block').disabled = true; $('log').textContent = '';
       $('bar').max = names.length; $('bar').value = 0;
       let done = 0, ok = 0;
       for (const name of names) {
@@ -68,7 +68,7 @@
         await sleep(500);
       }
       $('status').textContent = `Готово: заблокировано ${ok} из ${names.length}`;
-      $('block').disabled = false;
+      $('block').disabled = false; window.__busy = false;
     };
   </script>
 </body>
