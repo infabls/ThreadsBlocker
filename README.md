@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.webp" alt="ThreadsBlocker" width="100%">
+</p>
+
 # ThreadsBlocker
 
 Массовая блокировка аккаунтов Threads по списку юзернеймов. Логин и пароль не уходят на сторонние серверы — запросы идут с вашего устройства напрямую в Instagram.
