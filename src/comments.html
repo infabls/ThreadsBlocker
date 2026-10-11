@@ -36,6 +36,7 @@
     <button class="danger" id="del">Удалить выбранные</button>
     <progress id="bar" value="0" max="1"></progress>
   </div>
+  <details><summary>Не удалось определить корень (<span id="unkN">0</span>)</summary><pre id="unk"></pre></details>
   <details><summary>Техническая информация</summary><pre id="tech"></pre></details>
   <br>
   <button class="secondary" id="back">← Назад</button>
@@ -92,7 +93,7 @@
       if (busy) return;
       busy = true; stopped = false;
       found.length = 0; skippedOwn = skippedUnknown = 0;
-      $('list').textContent = ''; $('tools').hidden = true; $('tech').textContent = '';
+      $('list').textContent = ''; $('tools').hidden = true; $('tech').textContent = ''; $('unk').textContent = ''; $('unkN').textContent = '0';
       $('scan').disabled = true; $('stop').hidden = false; $('stop').disabled = false;
       refreshSkipped();
       let sample = null;
@@ -103,7 +104,12 @@
           onItem: (it) => {
             if (!sample) sample = it;
             if (it.status === 'own') { skippedOwn++; refreshSkipped(); return; }
-            if (it.status === 'unknown') { skippedUnknown++; refreshSkipped(); return; }
+            if (it.status === 'unknown') {
+              skippedUnknown++; refreshSkipped();
+              $('unkN').textContent = skippedUnknown;
+              $('unk').textContent += '• ' + (it.text || '(без текста)') + ' | ' + (it.why || 'причина не указана') + String.fromCharCode(10);
+              return;
+            }
             found.push(it);
             const d = document.createElement('label');
             d.className = 'item';
