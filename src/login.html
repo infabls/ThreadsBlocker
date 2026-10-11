@@ -10,6 +10,7 @@
   <h1>Вход в Threads <small id="ver"></small></h1>
   <input id="username" placeholder="Имя пользователя" autocapitalize="none" autocomplete="username">
   <input id="password" type="password" placeholder="Пароль" autocomplete="current-password">
+  <label style="display:block;margin-bottom:12px;font-size:14px"><input id="remember" type="checkbox" checked style="width:auto;margin:0 8px 0 0">Запомнить на этом устройстве</label>
   <div id="error"></div>
   <button id="login">Войти</button>
   <script src="version.js"></script>
@@ -27,6 +28,7 @@
       try {
         const session = await TB.login(username, password);
         await Storage.set('session', JSON.stringify(session));
+        if ($('remember').checked) await Storage.set('creds', JSON.stringify({ u: username, p: password }));
         location.replace('main.html');
       } catch (e) {
         $('error').textContent = e.message;

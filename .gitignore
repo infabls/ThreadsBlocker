@@ -6,3 +6,6 @@ android/build/
 .gradle/
 local.properties
 .claude/
+keystore/
+*.keystore
+*.jks

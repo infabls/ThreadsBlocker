@@ -45,7 +45,25 @@
           !confirm(`В списке ${names.length} аккаунтов. Возможен rate-limit со стороны Instagram. Продолжить?`)) return;
       const raw = await Storage.get('session');
       if (!raw) return logout();
-      const session = JSON.parse(raw);
+      let session = JSON.parse(raw);
+
+      // сессия истекла -> один тихий перевход сохранёнными данными (если пользователь запомнил пароль)
+      async function relogin() {
+        const c = await Storage.get('creds');
+        if (!c) return false;
+        try {
+          const { u, p } = JSON.parse(c);
+          session = await TB.login(u, p);
+          await Storage.set('session', JSON.stringify(session));
+          return true;
+        } catch (e) { return false; }
+      }
+      const blockOne = async (name) => {
+        const userId = await TB.findUserId(name, session);
+        if (!userId) return log(`❌ ${name} — не найден`);
+        if (await TB.block(userId, session)) { ok++; log(`✅ ${name} — заблокирован`); }
+        else log(`❌ ${name} — ошибка`);
+      };
 
       window.__busy = true; $('block').disabled = true; $('log').textContent = '';
       $('bar').max = names.length; $('bar').value = 0;
@@ -53,10 +71,11 @@
       for (const name of names) {
         $('status').textContent = `${done} / ${names.length}`;
         try {
-          const userId = await TB.findUserId(name, session);
-          if (!userId) log(`❌ ${name} — не найден`);
-          else if (await TB.block(userId, session)) { ok++; log(`✅ ${name} — заблокирован`); }
-          else log(`❌ ${name} — ошибка`);
+          try { await blockOne(name); }
+          catch (e) {
+            if (!(e instanceof TB.AuthError) || !(await relogin())) throw e;
+            await blockOne(name); // повтор уже с новой сессией
+          }
         } catch (e) {
           if (e instanceof TB.AuthError) {
             alert('Сессия истекла. Войдите снова.');

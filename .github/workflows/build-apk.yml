@@ -40,12 +40,21 @@ jobs:
 
       - name: Сборка APK
         working-directory: android
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
-
-      - name: Переименовать APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk ThreadsBlocker.apk
+          if [ -n "$KEYSTORE_B64" ]; then
+            # постоянный ключ: обновления ставятся поверх старой версии, данные не теряются
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            export KEYSTORE_FILE="$RUNNER_TEMP/release.keystore"
+            ./gradlew assembleRelease --no-daemon
+            cp app/build/outputs/apk/release/app-release.apk ../ThreadsBlocker.apk
+          else
+            ./gradlew assembleDebug --no-daemon
+            cp app/build/outputs/apk/debug/app-debug.apk ../ThreadsBlocker.apk
+          fi
 
       - name: Архив веб-части для автообновления
         run: cd src && zip -qr ../ThreadsBlocker-web.zip .

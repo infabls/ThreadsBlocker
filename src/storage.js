@@ -1,6 +1,10 @@
 // Обёртка над @capacitor/preferences (в браузере — запасной вариант localStorage)
 const Storage = (() => {
-  const prefs = () => window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences;
+  const prefs = () => {
+    const c = window.Capacitor;
+    if (!c || !(c.isNativePlatform && c.isNativePlatform())) return null;
+    return (c.Plugins && c.Plugins.Preferences) || c.registerPlugin('Preferences');
+  };
   return {
     async get(key) {
       const p = prefs();
