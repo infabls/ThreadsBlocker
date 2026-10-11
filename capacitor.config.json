@@ -3,6 +3,7 @@
   "appName": "ThreadsBlocker",
   "webDir": "src",
   "plugins": {
-    "CapacitorHttp": { "enabled": true }
+    "CapacitorHttp": { "enabled": true },
+    "CapacitorUpdater": { "autoUpdate": false }
   }
 }

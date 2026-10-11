@@ -28,6 +28,10 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Версия из тега
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: echo "window.APP_VERSION = '${GITHUB_REF_NAME#v}';" > src/version.js
+
       - name: Зависимости и сборка веб-части
         run: |
           pnpm install --frozen-lockfile
@@ -43,14 +47,21 @@ jobs:
       - name: Переименовать APK
         run: cp android/app/build/outputs/apk/debug/app-debug.apk ThreadsBlocker.apk
 
+      - name: Архив веб-части для автообновления
+        run: cd src && zip -qr ../ThreadsBlocker-web.zip .
+
       - uses: actions/upload-artifact@v4
         with:
           name: ThreadsBlocker-apk
-          path: ThreadsBlocker.apk
+          path: |
+            ThreadsBlocker.apk
+            ThreadsBlocker-web.zip
 
       - name: Релиз с APK
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: ThreadsBlocker.apk
+          files: |
+            ThreadsBlocker.apk
+            ThreadsBlocker-web.zip
           generate_release_notes: true
